@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Conecta Cortês</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #00A859; color: white; }
+        .badge { padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+        .nassau { background: #e3f2fd; color: #1976d2; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🚌 Passageiros de Hoje</h2>
+        <table id="tabela-hoje">
+            <thead>
+                <tr>
+                    <th>Nº</th>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Destino</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="limparLista()" style="background:red; color:white; border:none; padding:10px; margin-top:10px; cursor:pointer; border-radius:5px;">LIMPAR LISTA DE HOJE</button>
+    </div>
+
+    <div class="card">
+        <h2>👥 Todos os Alunos Cadastrados</h2>
+        <table id="tabela-usuarios">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Apelido</th>
+                    <th>CPF</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://conecta-cortes-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Lista de quem reservou hoje
+        db.ref('passageiros').on('value', snap => {
+            const tbody = document.querySelector('#tabela-hoje tbody');
+            tbody.innerHTML = "";
+            let i = 0;
+            snap.forEach(item => {
+                i++; const p = item.val();
+                tbody.innerHTML += `<tr>
+                    <td>${i}</td>
+                    <td>${p.nome_completo}</td>
+                    <td>${p.cpf_completo}</td>
+                    <td><span class="badge nassau">${p.destino}</span></td>
+                </tr>`;
+            });
+        });
+
+        // Lista de todos os cadastrados no sistema
+        db.ref('usuarios').on('value', snap => {
+            const tbody = document.querySelector('#tabela-usuarios tbody');
+            tbody.innerHTML = "";
+            snap.forEach(item => {
+                const u = item.val();
+                tbody.innerHTML += `<tr>
+                    <td>${u.nome}</td>
+                    <td>${u.apelido}</td>
+                    <td>${u.cpf}</td>
+                </tr>`;
+            });
+        });
+
+        function limparLista() {
+            if(confirm("Deseja apagar a lista de hoje?")) db.ref('passageiros').remove();
+        }
+    </script>
+</body>
+</html>
