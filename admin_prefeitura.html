@@ -2,45 +2,154 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Conecta Cortês</title>
+    <title>Master Admin - Conecta Cortês</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        :root {
+            --primary: #00A859;
+            --secondary: #0072BB;
+            --danger: #dc3545;
+            --dark: #1e293b;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--dark); }
+        
+        /* GRID DE CONFIGURAÇÕES DINÂMICAS */
+        .grid-config { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .config-box { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .config-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+        
+        .input-styled { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; font-weight: 600; }
+        
+        /* GESTOR DE FROTA & INTERRUPTORES */
+        .flex-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* TABELAS E BADGES */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #00A859; color: white; }
-        .badge { padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-        .nassau { background: #e3f2fd; color: #1976d2; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        th { background: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 11px; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+        .nassau { background: #e0f2fe; color: #0369a1; }
+        .outras { background: #dcfce7; color: #15803d; }
+
+        /* BOTÕES DE AÇÃO */
+        .btn { border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-save { background: var(--dark); color: white; width: 100%; margin-top: 10px; }
+        .btn-save:hover { background: #000; }
+        .btn-whatsapp { background: #25d366; color: white; width: 100%; text-decoration: none; }
+        .btn-delete { background: #fee2e2; color: var(--danger); font-size: 16px; padding: 8px; }
+        .btn-limpar { background: var(--danger); color: white; }
+
+        .stat-card { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-item { flex: 1; background: var(--dark); color: white; padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-item span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>🚌 Passageiros de Hoje</h2>
+        <h2>🚀 Central de Comando Dinâmica</h2>
+        <div class="grid-config">
+            <div class="config-box">
+                <label>🚍 Gestor de Frota (Capacidade)</label>
+                <div class="flex-row">
+                    <span>Vagas Ônibus 1:</span>
+                    <input type="number" id="cap-1" class="input-styled" style="width: 60px; margin:0;" value="44">
+                </div>
+                <div class="flex-row">
+                    <span>Vagas Ônibus 2:</span>
+                    <input type="number" id="cap-2" class="input-styled" style="width: 60px; margin:0;" value="44">
+                </div>
+            </div>
+
+            <div class="config-box">
+                <label>📍 Destinos Ativos</label>
+                <div class="flex-row">
+                    <span>UNINASSAU:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="status-nassau" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="flex-row">
+                    <span>OUTRAS:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="status-outras" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="config-box">
+                <label>⏰ Fechamento do App</label>
+                <input type="time" id="cfg-hora-fim" class="input-styled" value="12:00">
+                <div class="flex-row">
+                    <span>Ativar Modo 24h:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="cfg-24h">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <label style="margin-top: 15px; display: block; font-size: 12px; font-weight: 700; color: #64748b;">📢 BROADCAST (AVISO NO TOPO DO APP):</label>
+        <input type="text" id="cfg-msg" class="input-styled" placeholder="Ex: O ônibus hoje atrasará 10 minutos...">
+        
+        <div class="flex-row" style="background: #fff9db; padding: 10px; border-radius: 8px; border: 1px solid #fab005; margin-top: 10px;">
+            <span style="font-size: 13px; font-weight: 600;">🔓 Liberar Tickets Instantaneamente?</span>
+            <label class="switch">
+                <input type="checkbox" id="cfg-instantaneo">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <button class="btn btn-save" onclick="salvarConfigGeral()">APLICAR TODAS AS ATUALIZAÇÕES</button>
+    </div>
+
+    <div class="card">
+        <h2>📊 Relatório de Embarque</h2>
+        <div class="stat-card">
+            <div class="stat-item">Nassau<span id="resumo-nassau">0/44</span></div>
+            <div class="stat-item">Outras<span id="resumo-outras">0/44</span></div>
+            <div class="stat-item">Total<span id="resumo-total">0</span></div>
+        </div>
+
         <table id="tabela-hoje">
             <thead>
                 <tr>
-                    <th>Nº</th>
-                    <th>Nome</th>
-                    <th>CPF</th>
+                    <th>Pos</th>
+                    <th>Apelido</th>
                     <th>Destino</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-        <button onclick="limparLista()" style="background:red; color:white; border:none; padding:10px; margin-top:10px; cursor:pointer; border-radius:5px;">LIMPAR LISTA DE HOJE</button>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+            <button onclick="limparListaHoje()" class="btn btn-limpar">ZERAR LISTA</button>
+            <a href="#" onclick="exportarWhatsSênior()" class="btn btn-whatsapp">MANDAR P/ MOTORISTA</a>
+        </div>
     </div>
 
     <div class="card">
-        <h2>👥 Todos os Alunos Cadastrados</h2>
+        <h2>👥 Moderação de Alunos (Cadastrados)</h2>
         <table id="tabela-usuarios">
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Apelido</th>
                     <th>CPF</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -48,27 +157,69 @@
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://conecta-cortes-default-rtdb.firebaseio.com/" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDG1x9M2T6wG_HG2MJ9w4dj2c8XOEsbIP4",
+            authDomain: "conecta-cortes.firebaseapp.com",
+            databaseURL: "https://conecta-cortes-default-rtdb.firebaseio.com",
+            projectId: "conecta-cortes"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Lista de quem reservou hoje
+        // SALVAR TODAS AS CONFIGURAÇÕES DINÂMICAS
+        function salvarConfigGeral() {
+            db.ref('configuracoes').set({
+                capacidade1: parseInt(document.getElementById('cap-1').value),
+                capacidade2: parseInt(document.getElementById('cap-2').value),
+                nassauAtivo: document.getElementById('status-nassau').checked,
+                outrasAtivo: document.getElementById('status-outras').checked,
+                horaFechamento: document.getElementById('cfg-hora-fim').value,
+                h24: document.getElementById('cfg-24h').checked,
+                msg: document.getElementById('cfg-msg').value,
+                instantaneo: document.getElementById('cfg-instantaneo').checked
+            }).then(() => alert("Sistema Atualizado com Sucesso!"));
+        }
+
+        // CARREGAR CONFIGURAÇÕES AO INICIAR
+        db.ref('configuracoes').on('value', snap => {
+            const c = snap.val();
+            if(!c) return;
+            document.getElementById('cap-1').value = c.capacidade1 || 44;
+            document.getElementById('cap-2').value = c.capacidade2 || 44;
+            document.getElementById('status-nassau').checked = c.nassauAtivo;
+            document.getElementById('status-outras').checked = c.outrasAtivo;
+            document.getElementById('cfg-hora-fim').value = c.horaFechamento || "12:00";
+            document.getElementById('cfg-24h').checked = c.h24;
+            document.getElementById('cfg-msg').value = c.msg || "";
+            document.getElementById('cfg-instantaneo').checked = c.instantaneo;
+        });
+
+        // GESTÃO DE PASSAGEIROS EM TEMPO REAL
         db.ref('passageiros').on('value', snap => {
             const tbody = document.querySelector('#tabela-hoje tbody');
             tbody.innerHTML = "";
-            let i = 0;
+            const hoje = new Date().toISOString().split('T')[0];
+            let n = 0, o = 0;
+
             snap.forEach(item => {
-                i++; const p = item.val();
-                tbody.innerHTML += `<tr>
-                    <td>${i}</td>
-                    <td>${p.nome_completo}</td>
-                    <td>${p.cpf_completo}</td>
-                    <td><span class="badge nassau">${p.destino}</span></td>
-                </tr>`;
+                const p = item.val();
+                if(p.data === hoje) {
+                    if(p.destino === 'UNINASSAU') n++; else o++;
+                    tbody.innerHTML += `<tr>
+                        <td>#${n+o}</td>
+                        <td><strong>${p.apelido || '---'}</strong></td>
+                        <td><span class="badge ${p.destino === 'UNINASSAU' ? 'nassau' : 'outras'}">${p.destino}</span></td>
+                        <td><button class="btn btn-delete" onclick="removerPassageiro('${item.key}')">🗑️</button></td>
+                    </tr>`;
+                }
             });
+
+            document.getElementById('resumo-nassau').innerText = `${n}/${document.getElementById('cap-1').value}`;
+            document.getElementById('resumo-outras').innerText = `${o}/${document.getElementById('cap-2').value}`;
+            document.getElementById('resumo-total').innerText = n+o;
         });
 
-        // Lista de todos os cadastrados no sistema
+        // MODERAÇÃO DE USUÁRIOS
         db.ref('usuarios').on('value', snap => {
             const tbody = document.querySelector('#tabela-usuarios tbody');
             tbody.innerHTML = "";
@@ -76,14 +227,41 @@
                 const u = item.val();
                 tbody.innerHTML += `<tr>
                     <td>${u.nome}</td>
-                    <td>${u.apelido}</td>
                     <td>${u.cpf}</td>
+                    <td><button class="btn btn-delete" onclick="banirUsuario('${item.key}')">🚫 Banir</button></td>
                 </tr>`;
             });
         });
 
-        function limparLista() {
-            if(confirm("Deseja apagar a lista de hoje?")) db.ref('passageiros').remove();
+        function removerPassageiro(key) { if(confirm("Remover da lista?")) db.ref('passageiros/'+key).remove(); }
+        
+        function banirUsuario(key) { if(confirm("Excluir cadastro permanentemente?")) db.ref('usuarios/'+key).remove(); }
+
+        function limparListaHoje() {
+            if(confirm("Zerar todas as reservas de hoje?")) {
+                const hoje = new Date().toISOString().split('T')[0];
+                db.ref('passageiros').once('value', snap => {
+                    snap.forEach(c => { if(c.val().data === hoje) db.ref('passageiros/'+c.key).remove(); });
+                });
+            }
+        }
+
+        async function exportarWhatsSênior() {
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const snap = await db.ref('passageiros').once('value');
+            const dataHoje = new Date().toISOString().split('T')[0];
+            let txt = `*RELATÓRIO DE EMBARQUE - ${hoje}*\n\n`;
+            
+            let nassau = "*🚍 ÔNIBUS 01 - NASSAU*\n", outras = "\n*🚍 ÔNIBUS 02 - OUTRAS*\n";
+            let iN = 0, iO = 0;
+
+            snap.forEach(c => {
+                if(c.val().data === dataHoje) {
+                    if(c.val().destino === 'UNINASSAU') nassau += `${++iN}. ${c.val().nome_completo}\n`;
+                    else outras += `${++iO}. ${c.val().nome_completo}\n`;
+                }
+            });
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(txt + nassau + outras)}`);
         }
     </script>
 </body>
