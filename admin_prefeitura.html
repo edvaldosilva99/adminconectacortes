@@ -2,267 +2,438 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Master Admin - Conecta Cortês</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortês Conecta | Admin Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        /* MANTENDO SEUS ESTILOS ORIGINAIS */
         :root {
-            --primary: #00A859;
-            --secondary: #0072BB;
-            --danger: #dc3545;
-            --dark: #1e293b;
+            --bg: #f4f7fa; --card: #ffffff; --text: #0f172a;
+            --p-500: #10b981; --p-600: #059669; --slate-200: #e2e8f0;
+            --slate-400: #94a3b8; --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --pref-azul: #0072BB;
         }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 25px; border: 1px solid #e2e8f0; }
-        h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--dark); }
-        
-        /* GRID DE CONFIGURAÇÕES DINÂMICAS */
-        .grid-config { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-        .config-box { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .config-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
-        
-        .input-styled { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; font-weight: 600; }
-        
-        /* GESTOR DE FROTA & INTERRUPTORES */
-        .flex-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
 
-        /* TABELAS E BADGES */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        th { background: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 11px; }
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
-        .nassau { background: #e0f2fe; color: #0369a1; }
-        .outras { background: #dcfce7; color: #15803d; }
+        body.dark-mode {
+            --bg: #0f172a; --card: #1e293b; --text: #f8fafc;
+            --slate-200: #334155; --slate-400: #64748b;
+            --shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
 
-        /* BOTÕES DE AÇÃO */
-        .btn { border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-save { background: var(--dark); color: white; width: 100%; margin-top: 10px; }
-        .btn-save:hover { background: #000; }
-        .btn-whatsapp { background: #25d366; color: white; width: 100%; text-decoration: none; }
-        .btn-delete { background: #fee2e2; color: var(--danger); font-size: 16px; padding: 8px; }
-        .btn-limpar { background: var(--danger); color: white; }
+        body.dark-mode input, body.dark-mode select { background: #0f172a !important; color: white; border-color: #334155 !important; }
+        body.dark-mode table th { background: #1e293b !important; }
+        body.dark-mode .stat-box { border-color: #334155 !important; }
 
-        .stat-card { display: flex; gap: 10px; margin-bottom: 20px; }
-        .stat-item { flex: 1; background: var(--dark); color: white; padding: 15px; border-radius: 12px; text-align: center; }
-        .stat-item span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--card); padding: 40px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; box-shadow: var(--shadow); }
+
+        .admin-container { max-width: 1280px; margin: 0 auto; display: none; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .logo-area h1 { font-size: 22px; font-weight: 800; margin: 0; }
+        
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .stat-box { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--slate-200); display: flex; align-items: center; gap: 15px; }
+        .icon-circle { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+        .dash-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .card { background: var(--card); padding: 24px; border-radius: 20px; box-shadow: var(--shadow); border: 1px solid var(--slate-200); }
+        
+        .input-styled { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--slate-200); font-size: 13px; font-weight: 600; outline: none; box-sizing: border-box; }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 12px; font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; }
+        td { padding: 12px; font-size: 14px; border-bottom: 1px solid var(--slate-200); }
+
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .nassau { background: #0369a120; color: #38bdf8; }
+        .outras { background: #16653420; color: #4ade80; }
+
+        .btn { border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; justify-content: center; }
+        .btn-p { background: #3b82f6; color: white; }
+        .btn-ticket { background: var(--p-600); color: white; width: 100%; margin-top: 15px; }
+        .btn-w { background: #25d366; color: white; text-decoration: none; }
+        .btn-danger { background: #ef444420; color: #ef4444; }
+
+        .btn-route { background: var(--slate-200); color: var(--text); font-size: 11px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--slate-200); }
+        .btn-route:hover { background: var(--pref-azul); color: white; }
+
+        .theme-toggle { background: var(--card); border: 1px solid var(--slate-200); padding: 8px 12px; border-radius: 20px; cursor: pointer; color: var(--text); }
+
+        /* ESTILOS PARA GESTÃO DE DESTINOS */
+        .destino-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 8px; margin-top: 5px; font-size: 12px; font-weight: 700; border: 1px solid var(--slate-200); }
+        body.dark-mode .destino-item { background: #0f172a; border-color: #334155; }
+        .btn-del-mini { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; }
+
+        @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>🚀 Central de Comando Dinâmica</h2>
-        <div class="grid-config">
-            <div class="config-box">
-                <label>🚍 Gestor de Frota (Capacidade)</label>
-                <div class="flex-row">
-                    <span>Vagas Ônibus 1:</span>
-                    <input type="number" id="cap-1" class="input-styled" style="width: 60px; margin:0;" value="44">
-                </div>
-                <div class="flex-row">
-                    <span>Vagas Ônibus 2:</span>
-                    <input type="number" id="cap-2" class="input-styled" style="width: 60px; margin:0;" value="44">
-                </div>
-            </div>
+<div id="login-overlay">
+    <div class="login-card">
+        <i class="fa-solid fa-bus-simple" style="font-size: 40px; color: #10b981; margin-bottom: 20px;"></i>
+        <h2 style="margin: 0;">Cortês Conecta</h2>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 25px;">Gestão de Transporte Universitário</p>
+        <input type="password" id="admin-pass" class="input-styled" placeholder="Senha de Acesso" style="text-align: center; margin-bottom: 15px;">
+        <button class="btn btn-p" style="width: 100%;" onclick="verificarAcesso()">Acessar Painel</button>
+    </div>
+</div>
 
-            <div class="config-box">
-                <label>📍 Destinos Ativos</label>
-                <div class="flex-row">
-                    <span>UNINASSAU:</span>
-                    <label class="switch">
-                        <input type="checkbox" id="status-nassau" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="flex-row">
-                    <span>OUTRAS:</span>
-                    <label class="switch">
-                        <input type="checkbox" id="status-outras" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="config-box">
-                <label>⏰ Fechamento do App</label>
-                <input type="time" id="cfg-hora-fim" class="input-styled" value="12:00">
-                <div class="flex-row">
-                    <span>Ativar Modo 24h:</span>
-                    <label class="switch">
-                        <input type="checkbox" id="cfg-24h">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
+<div class="admin-container" id="main-admin">
+    <header>
+        <div class="logo-area">
+            <h1>Cortês Conecta <span style="color:var(--p-500)">.</span></h1>
+            <p style="font-size: 13px; color: var(--slate-400);">Prefeitura Municipal de Cortês</p>
         </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <div id="data-atual" style="font-weight: 800; font-size: 14px;"></div>
+        </div>
+    </header>
 
-        <label style="margin-top: 15px; display: block; font-size: 12px; font-weight: 700; color: #64748b;">📢 BROADCAST (AVISO NO TOPO DO APP):</label>
-        <input type="text" id="cfg-msg" class="input-styled" placeholder="Ex: O ônibus hoje atrasará 10 minutos...">
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="icon-circle" style="background:#0ea5e920; color:#0ea5e9"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="stat-info"><small>Nassau</small><div id="resumo-nassau" style="font-weight:800; font-size:18px;">0</div></div>
+        </div>
+        <div class="stat-box">
+            <div class="icon-circle" style="background:#10b98120; color:#10b981"><i class="fa-solid fa-school"></i></div>
+            <div class="stat-info"><small>Outras</small><div id="resumo-outras" style="font-weight:800; font-size:18px;">0</div></div>
+        </div>
+        <div class="stat-box">
+            <div class="icon-circle" style="background:#f59e0b20; color:#f59e0b"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-info"><small>Total Reservas</small><div id="resumo-total" style="font-weight:800; font-size:18px;">0</div></div>
+        </div>
+        <div class="stat-box" style="border: 1px solid var(--p-500);">
+            <div class="icon-circle" style="background:var(--p-500); color:white"><i class="fa-solid fa-bus"></i></div>
+            <div class="stat-info"><small>Frota Ativa</small><div id="status-frota" style="font-weight:800; font-size:14px;">Calculando...</div></div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="font-size: 16px; margin-bottom: 15px;"><i class="fa-solid fa-route"></i> Controle de Destinos em Tempo Real</h2>
         
-        <div class="flex-row" style="background: #fff9db; padding: 10px; border-radius: 8px; border: 1px solid #fab005; margin-top: 10px;">
-            <span style="font-size: 13px; font-weight: 600;">🔓 Liberar Tickets Instantaneamente?</span>
-            <label class="switch">
-                <input type="checkbox" id="cfg-instantaneo">
-                <span class="slider"></span>
-            </label>
+        <div style="margin-bottom: 20px; padding: 10px; border-left: 4px solid var(--pref-azul); background: rgba(0,114,187,0.05);">
+            <small style="font-weight: 800; color: var(--pref-azul);">ÔNIBUS 01 - ROTA</small>
+            <div id="container-botoes-bus1" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+            <button class="btn btn-danger" style="margin-top: 8px; padding: 5px 10px; font-size: 10px;" onclick="enviarRotaAdmin('onibus_1', 'Aguardando...')">Limpar Ônibus 1</button>
         </div>
 
-        <button class="btn btn-save" onclick="salvarConfigGeral()">APLICAR TODAS AS ATUALIZAÇÕES</button>
+        <div style="padding: 10px; border-left: 4px solid var(--p-500); background: rgba(16,185,129,0.05);">
+            <small style="font-weight: 800; color: var(--p-500);">ÔNIBUS 02 - ROTA</small>
+            <div id="container-botoes-bus2" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+            <button class="btn btn-danger" style="margin-top: 8px; padding: 5px 10px; font-size: 10px;" onclick="enviarRotaAdmin('onibus_2', 'Aguardando...')">Limpar Ônibus 2</button>
+        </div>
+    </div>
+
+    <div class="dash-grid">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 16px; margin: 0;"><i class="fa-solid fa-chart-column"></i> Histórico da Semana</h2>
+                <input type="date" id="hist-inicio" class="input-styled" style="width: 160px;" onchange="filtrarHistorico()">
+            </div>
+            <div style="height: 300px;"><canvas id="dailyChart"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size: 16px; margin-bottom: 15px;"><i class="fa-solid fa-sliders"></i> Parâmetros</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <small>GERENCIAR FACULDADES (ROTAS)</small>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <input type="text" id="novo-destino" class="input-styled" placeholder="Ex: UFPE">
+                    <button class="btn btn-p" onclick="adicionarDestino()"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div id="lista-destinos-admin" style="margin-top: 10px; max-height: 150px; overflow-y: auto;">
+                    </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <small>CAPACIDADE POR ÔNIBUS</small>
+                <input type="number" id="cfg-vagas" class="input-styled" value="45">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div><small>ABERTURA</small><input type="time" id="cfg-reserva-abre" class="input-styled"></div>
+                <div><small>FECHAMENTO</small><input type="time" id="cfg-reserva-fecha" class="input-styled"></div>
+            </div>
+            <button class="btn btn-p" style="width: 100%; margin-bottom: 10px;" onclick="salvarConfig()">Salvar Ajustes</button>
+            <button class="btn btn-ticket" onclick="processarTicketsHoje()">
+                <i class="fa-solid fa-bolt"></i> Liberar Tickets Agora
+            </button>
+        </div>
     </div>
 
     <div class="card">
-        <h2>📊 Relatório de Embarque</h2>
-        <div class="stat-card">
-            <div class="stat-item">Nassau<span id="resumo-nassau">0/44</span></div>
-            <div class="stat-item">Outras<span id="resumo-outras">0/44</span></div>
-            <div class="stat-item">Total<span id="resumo-total">0</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 16px; margin: 0;"><i class="fa-solid fa-list-ol"></i> Fila de Embarque</h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" onclick="limparListaHoje()"><i class="fa-solid fa-trash-can"></i> Limpar</button>
+                <a href="#" onclick="exportarWhats()" class="btn btn-w"><i class="fa-brands fa-whatsapp"></i> Exportar Lista</a>
+            </div>
         </div>
-
-        <table id="tabela-hoje">
-            <thead>
-                <tr>
-                    <th>Pos</th>
-                    <th>Apelido</th>
-                    <th>Destino</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
-            <button onclick="limparListaHoje()" class="btn btn-limpar">ZERAR LISTA</button>
-            <a href="#" onclick="exportarWhatsSênior()" class="btn btn-whatsapp">MANDAR P/ MOTORISTA</a>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr><th>Nº</th><th>Estudante</th><th>Destino</th><th>Status</th></tr>
+                </thead>
+                <tbody id="tabela-corpo"></tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    <div class="card">
-        <h2>👥 Moderação de Alunos (Cadastrados)</h2>
-        <table id="tabela-usuarios">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>CPF</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+<script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyDG1x9M2T6wG_HG2MJ9w4dj2c8XOEsbIP4",
+        authDomain: "conecta-cortes.firebaseapp.com",
+        databaseURL: "https://conecta-cortes-default-rtdb.firebaseio.com",
+        projectId: "conecta-cortes"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDG1x9M2T6wG_HG2MJ9w4dj2c8XOEsbIP4",
-            authDomain: "conecta-cortes.firebaseapp.com",
-            databaseURL: "https://conecta-cortes-default-rtdb.firebaseio.com",
-            projectId: "conecta-cortes"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    function verificarAcesso() {
+        if(document.getElementById('admin-pass').value === "admin123") {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-admin').style.display = 'block';
+            inicializarApp();
+        } else { Swal.fire('Erro', 'Senha incorreta!', 'error'); }
+    }
 
-        // SALVAR TODAS AS CONFIGURAÇÕES DINÂMICAS
-        function salvarConfigGeral() {
-            db.ref('configuracoes').set({
-                capacidade1: parseInt(document.getElementById('cap-1').value),
-                capacidade2: parseInt(document.getElementById('cap-2').value),
-                nassauAtivo: document.getElementById('status-nassau').checked,
-                outrasAtivo: document.getElementById('status-outras').checked,
-                horaFechamento: document.getElementById('cfg-hora-fim').value,
-                h24: document.getElementById('cfg-24h').checked,
-                msg: document.getElementById('cfg-msg').value,
-                instantaneo: document.getElementById('cfg-instantaneo').checked
-            }).then(() => alert("Sistema Atualizado com Sucesso!"));
-        }
+    // --- GESTÃO DINÂMICA DE DESTINOS ---
+    function adicionarDestino() {
+        const nome = document.getElementById('novo-destino').value.trim();
+        if(!nome) return;
+        db.ref('destinos').push(nome).then(() => {
+            document.getElementById('novo-destino').value = "";
+        });
+    }
 
-        // CARREGAR CONFIGURAÇÕES AO INICIAR
+    function removerDestino(id) {
+        Swal.fire({ title: 'Remover faculdade?', icon: 'warning', showCancelButton: true }).then(r => {
+            if(r.isConfirmed) db.ref('destinos/' + id).remove();
+        });
+    }
+
+    function carregarDestinos() {
+        db.ref('destinos').on('value', snap => {
+            const containerBus1 = document.getElementById('container-botoes-bus1');
+            const containerBus2 = document.getElementById('container-botoes-bus2');
+            const listaAdmin = document.getElementById('lista-destinos-admin');
+            
+            containerBus1.innerHTML = "";
+            containerBus2.innerHTML = "";
+            listaAdmin.innerHTML = "";
+
+            snap.forEach(item => {
+                const nome = item.val();
+                const id = item.key;
+
+                // Botões para Ônibus 1
+                containerBus1.innerHTML += `<button class="btn btn-route" onclick="enviarRotaAdmin('onibus_1', 'Indo p/ ${nome}')">${nome}</button>`;
+                
+                // Botões para Ônibus 2
+                containerBus2.innerHTML += `<button class="btn btn-route" onclick="enviarRotaAdmin('onibus_2', 'Indo p/ ${nome}')">${nome}</button>`;
+                
+                // Lista de edição/remoção
+                listaAdmin.innerHTML += `
+                    <div class="destino-item">
+                        <span>${nome}</span>
+                        <button class="btn-del-mini" onclick="removerDestino('${id}')"><i class="fa-solid fa-xmark"></i></button>
+                    </div>`;
+            });
+        });
+    }
+
+    function enviarRotaAdmin(onibus, texto) {
+        db.ref('viagem_status/' + onibus).set({
+            mensagem: texto,
+            timestamp: Date.now()
+        }).then(() => {
+            Swal.fire({ title: 'Atualizado!', text: texto, icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top' });
+        });
+    }
+
+    // --- FUNÇÕES DE TEMA E INICIALIZAÇÃO ---
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        const icon = document.querySelector('.theme-toggle i');
+        icon.className = document.body.classList.contains('dark-mode') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+
+    let dailyChart;
+
+    function inicializarApp() {
+        const hojeObj = new Date();
+        document.getElementById('data-atual').innerText = hojeObj.toLocaleDateString('pt-br');
+        document.getElementById('hist-inicio').value = hojeObj.toISOString().split('T')[0];
+
+        const ctx = document.getElementById('dailyChart').getContext('2d');
+        dailyChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Reservas', data: [], backgroundColor: '#10b981', borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+        
+        carregarDados();
+        carregarDestinos();
+        setInterval(verificarAutomacao, 30000);
+    }
+
+    function carregarDados() {
         db.ref('configuracoes').on('value', snap => {
-            const c = snap.val();
-            if(!c) return;
-            document.getElementById('cap-1').value = c.capacidade1 || 44;
-            document.getElementById('cap-2').value = c.capacidade2 || 44;
-            document.getElementById('status-nassau').checked = c.nassauAtivo;
-            document.getElementById('status-outras').checked = c.outrasAtivo;
-            document.getElementById('cfg-hora-fim').value = c.horaFechamento || "12:00";
-            document.getElementById('cfg-24h').checked = c.h24;
-            document.getElementById('cfg-msg').value = c.msg || "";
-            document.getElementById('cfg-instantaneo').checked = c.instantaneo;
+            const c = snap.val(); if(!c) return;
+            document.getElementById('cfg-reserva-abre').value = c.reservaInicia || "07:00";
+            document.getElementById('cfg-reserva-fecha').value = c.reservaTermina || "12:00";
+            document.getElementById('cfg-vagas').value = c.vagasOnibus || 45;
         });
 
-        // GESTÃO DE PASSAGEIROS EM TEMPO REAL
         db.ref('passageiros').on('value', snap => {
-            const tbody = document.querySelector('#tabela-hoje tbody');
+            const tbody = document.getElementById('tabela-corpo');
             tbody.innerHTML = "";
             const hoje = new Date().toISOString().split('T')[0];
-            let n = 0, o = 0;
+            let n = 0, o = 0, hist = {};
 
             snap.forEach(item => {
                 const p = item.val();
+                hist[p.data] = (hist[p.data] || 0) + 1;
                 if(p.data === hoje) {
                     if(p.destino === 'UNINASSAU') n++; else o++;
+                    const numTicket = p.numero_ticket ? `#${p.numero_ticket}` : '--';
                     tbody.innerHTML += `<tr>
-                        <td>#${n+o}</td>
-                        <td><strong>${p.apelido || '---'}</strong></td>
+                        <td><b style="color:var(--p-500)">${numTicket}</b></td>
+                        <td><b>${p.nome_completo}</b></td>
                         <td><span class="badge ${p.destino === 'UNINASSAU' ? 'nassau' : 'outras'}">${p.destino}</span></td>
-                        <td><button class="btn btn-delete" onclick="removerPassageiro('${item.key}')">🗑️</button></td>
+                        <td><small>${p.status || 'Pendente'}</small></td>
                     </tr>`;
                 }
             });
 
-            document.getElementById('resumo-nassau').innerText = `${n}/${document.getElementById('cap-1').value}`;
-            document.getElementById('resumo-outras').innerText = `${o}/${document.getElementById('cap-2').value}`;
-            document.getElementById('resumo-total').innerText = n+o;
+            document.getElementById('resumo-nassau').innerText = n;
+            document.getElementById('resumo-outras').innerText = o;
+            document.getElementById('resumo-total').innerText = n + o;
+            document.getElementById('status-frota').innerText = (n+o) <= parseInt(document.getElementById('cfg-vagas').value) ? "1 ÔNIBUS" : "2 ÔNIBUS";
+            
+            atualizarGrafico(document.getElementById('hist-inicio').value, hist);
         });
+    }
 
-        // MODERAÇÃO DE USUÁRIOS
-        db.ref('usuarios').on('value', snap => {
-            const tbody = document.querySelector('#tabela-usuarios tbody');
-            tbody.innerHTML = "";
-            snap.forEach(item => {
-                const u = item.val();
-                tbody.innerHTML += `<tr>
-                    <td>${u.nome}</td>
-                    <td>${u.cpf}</td>
-                    <td><button class="btn btn-delete" onclick="banirUsuario('${item.key}')">🚫 Banir</button></td>
-                </tr>`;
+    function atualizarGrafico(dataRef, registros) {
+        let curr = new Date(dataRef + "T12:00:00");
+        curr.setDate(curr.getDate() - curr.getDay());
+        let diasLabels = []; let valores = [];
+        const nomesDias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        for(let i=0; i<7; i++) {
+            let dString = curr.toISOString().split('T')[0];
+            diasLabels.push(`${nomesDias[i]} (${dString.split('-').reverse().slice(0,2).join('/')})`);
+            valores.push(registros[dString] || 0);
+            curr.setDate(curr.getDate() + 1);
+        }
+        dailyChart.data.labels = diasLabels;
+        dailyChart.data.datasets[0].data = valores;
+        dailyChart.update();
+    }
+
+    async function verificarAutomacao() {
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
+        const horaFecha = document.getElementById('cfg-reserva-fecha').value;
+        if(horaAtual >= horaFecha) {
+            const hoje = agora.toISOString().split('T')[0];
+            db.ref('passageiros').orderByChild('data').equalTo(hoje).once('value', snapshot => {
+                let jaProcessado = false;
+                snapshot.forEach(c => { if(c.val().numero_ticket) jaProcessado = true; });
+                if(!jaProcessado && snapshot.numChildren() > 0) processarTicketsHoje(true);
             });
-        });
+        }
+    }
 
-        function removerPassageiro(key) { if(confirm("Remover da lista?")) db.ref('passageiros/'+key).remove(); }
-        
-        function banirUsuario(key) { if(confirm("Excluir cadastro permanentemente?")) db.ref('usuarios/'+key).remove(); }
-
-        function limparListaHoje() {
-            if(confirm("Zerar todas as reservas de hoje?")) {
-                const hoje = new Date().toISOString().split('T')[0];
-                db.ref('passageiros').once('value', snap => {
-                    snap.forEach(c => { if(c.val().data === hoje) db.ref('passageiros/'+c.key).remove(); });
+    async function processarTicketsHoje(isAuto = false) {
+        const hoje = new Date().toISOString().split('T')[0];
+        const vagas = parseInt(document.getElementById('cfg-vagas').value);
+        db.ref('passageiros').orderByChild('timestamp').once('value', snapshot => {
+            let lista = [];
+            snapshot.forEach(c => { if(c.val().data === hoje) lista.push({key: c.key, ...c.val()}); });
+            if(lista.length === 0) return;
+            const updates = {};
+            if(lista.length <= vagas) {
+                lista.forEach((aluno, i) => {
+                    updates[`/passageiros/${aluno.key}/numero_ticket`] = i + 1;
+                    updates[`/passageiros/${aluno.key}/onibus_designado`] = 1;
+                    updates[`/passageiros/${aluno.key}/status`] = "Confirmado";
+                });
+            } else {
+                let cN = 1, cO = 1;
+                lista.forEach(aluno => {
+                    if(aluno.destino === 'UNINASSAU') {
+                        updates[`/passageiros/${aluno.key}/numero_ticket`] = cN++;
+                        updates[`/passageiros/${aluno.key}/onibus_designado`] = 1;
+                    } else {
+                        updates[`/passageiros/${aluno.key}/numero_ticket`] = cO++;
+                        updates[`/passageiros/${aluno.key}/onibus_designado`] = 2;
+                    }
+                    updates[`/passageiros/${aluno.key}/status`] = "Confirmado";
                 });
             }
-        }
+            db.ref().update(updates).then(() => { if(!isAuto) Swal.fire('Sucesso!', 'Tickets liberados.', 'success'); });
+        });
+    }
 
-        async function exportarWhatsSênior() {
-            const hoje = new Date().toLocaleDateString('pt-BR');
-            const snap = await db.ref('passageiros').once('value');
-            const dataHoje = new Date().toISOString().split('T')[0];
-            let txt = `*RELATÓRIO DE EMBARQUE - ${hoje}*\n\n`;
-            
-            let nassau = "*🚍 ÔNIBUS 01 - NASSAU*\n", outras = "\n*🚍 ÔNIBUS 02 - OUTRAS*\n";
-            let iN = 0, iO = 0;
+    function salvarConfig() {
+        db.ref('configuracoes').update({
+            reservaInicia: document.getElementById('cfg-reserva-abre').value,
+            reservaTermina: document.getElementById('cfg-reserva-fecha').value,
+            vagasOnibus: document.getElementById('cfg-vagas').value
+        }).then(() => Swal.fire('Salvo!', 'Configurações atualizadas.', 'success'));
+    }
 
-            snap.forEach(c => {
-                if(c.val().data === dataHoje) {
-                    if(c.val().destino === 'UNINASSAU') nassau += `${++iN}. ${c.val().nome_completo}\n`;
-                    else outras += `${++iO}. ${c.val().nome_completo}\n`;
-                }
-            });
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(txt + nassau + outras)}`);
+    function limparListaHoje() {
+        Swal.fire({ title: 'Limpar reservas de hoje?', icon: 'warning', showCancelButton: true }).then(r => {
+            if(r.isConfirmed) {
+                const hoje = new Date().toISOString().split('T')[0];
+                db.ref('passageiros').once('value', s => s.forEach(c => { if(c.val().data === hoje) c.ref.remove(); }));
+            }
+        });
+    }
+
+    async function exportarWhats() {
+        const snap = await db.ref('passageiros').orderByChild('numero_ticket').once('value');
+        const hoje = new Date().toISOString().split('T')[0];
+        const vagas = parseInt(document.getElementById('cfg-vagas').value);
+        let listaTotal = [];
+        snap.forEach(c => { if(c.val().data === hoje) listaTotal.push(c.val()); });
+        let msg = `*CORTÊS CONECTA - ${new Date().toLocaleDateString()}*\n`;
+        if(listaTotal.length <= vagas) {
+            msg += `\n*🚍 ÔNIBUS ÚNICO*\n`;
+            listaTotal.forEach(p => msg += `${p.numero_ticket}. ${p.nome_completo} (${p.destino})\n`);
+        } else {
+            msg += `\n*🚍 ÔNIBUS 01 (NASSAU)*\n`;
+            listaTotal.filter(p => p.onibus_designado == 1).forEach(p => msg += `${p.numero_ticket}. ${p.nome_completo}\n`);
+            msg += `\n*🚍 ÔNIBUS 02 (OUTRAS)*\n`;
+            listaTotal.filter(p => p.onibus_designado == 2).forEach(p => msg += `${p.numero_ticket}. ${p.nome_completo}\n`);
         }
-    </script>
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
+    }
+
+    function filtrarHistorico() {
+        const dataSelecionada = document.getElementById('hist-inicio').value;
+        db.ref('passageiros').once('value', snap => {
+            let hist = {};
+            snap.forEach(i => hist[i.val().data] = (hist[i.val().data] || 0) + 1);
+            atualizarGrafico(dataSelecionada, hist);
+        });
+    }
+</script>
 </body>
 </html>
